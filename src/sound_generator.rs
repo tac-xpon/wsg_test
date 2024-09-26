@@ -31,7 +31,7 @@ impl GeneratorUnit {
 }
 
 #[derive(PartialEq, Eq, PartialOrd, Ord, Clone, Copy, Debug)]
-pub enum PanPod {
+pub enum PanPot {
     Left = -1,
     Center = 0,
     Right = 1,
@@ -47,7 +47,7 @@ pub struct SoundGenerator {
     pub mute: [bool; NUM_OF_GENARTORS],
     buffer_pos: usize,
     mixed_buffer: Vec<u16>,
-    pub panpod: [PanPod; NUM_OF_GENARTORS],
+    pub panpot: [PanPot; NUM_OF_GENARTORS],
 }
 
 #[allow(dead_code)]
@@ -78,7 +78,7 @@ impl SoundGenerator {
             mute: [false; NUM_OF_GENARTORS],
             buffer_pos: 0,
             mixed_buffer: vec![SETUP_U16 as u16; samples_per_frame * 2],
-            panpod: [PanPod::Center; NUM_OF_GENARTORS],
+            panpot: [PanPot::Center; NUM_OF_GENARTORS],
         }
     }
 
@@ -93,8 +93,8 @@ impl SoundGenerator {
         for d in self.mixed_buffer.iter_mut() {
             *d = SETUP_U16 as u16;
         }
-        for p in self.panpod.iter_mut() {
-            *p = PanPod::Center;
+        for p in self.panpot.iter_mut() {
+            *p = PanPot::Center;
         }
     }
 
@@ -175,14 +175,14 @@ impl SoundGenerator {
             let mut integrated_l = 0;
             let mut integrated_r = 0;
             for (unit_no, unit) in self.generators.iter().enumerate() {
-                if self.panpod[unit_no] == PanPod::Left {
+                if self.panpot[unit_no] == PanPot::Left {
                     integrated_l += unit.buffer[self.buffer_pos];
                 }
-                if self.panpod[unit_no] == PanPod::Center {
-                    integrated_l += unit.buffer[self.buffer_pos] / 2;
-                    integrated_r += unit.buffer[self.buffer_pos] / 2;
+                if self.panpot[unit_no] == PanPot::Center {
+                    integrated_l += unit.buffer[self.buffer_pos] * 2 / 3; // = value / 1.5
+                    integrated_r += unit.buffer[self.buffer_pos] * 2 / 3;
                 }
-                if self.panpod[unit_no] == PanPod::Right {
+                if self.panpot[unit_no] == PanPot::Right {
                     integrated_r += unit.buffer[self.buffer_pos];
                 }
             }

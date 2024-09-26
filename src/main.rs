@@ -256,19 +256,19 @@ fn main() {
                     sound_manager.suppress_last_silence = suppress_last;
                 }
                 if achar.code == 'L' as u32 {
-                    sound_generator.panpod[(m_pos_bgy - 6) as usize / 2] = PanPod::Left;
+                    sound_generator.panpot[(m_pos_bgy - 6) as usize / 2] = PanPot::Left;
                 }
                 if achar.code == 'C' as u32 {
                     if m_pos_bgy < 6 {
-                        for panpod in sound_generator.panpod.iter_mut() {
-                            *panpod = PanPod::Center;
+                        for panpod in sound_generator.panpot.iter_mut() {
+                            *panpod = PanPot::Center;
                         }
                     } else {
-                        sound_generator.panpod[(m_pos_bgy - 6) as usize / 2] = PanPod::Center;
+                        sound_generator.panpot[(m_pos_bgy - 6) as usize / 2] = PanPot::Center;
                     }
                 }
                 if achar.code == 'R' as u32 {
-                    sound_generator.panpod[(m_pos_bgy - 6) as usize / 2] = PanPod::Right;
+                    sound_generator.panpot[(m_pos_bgy - 6) as usize / 2] = PanPot::Right;
                 }
             }
         }
@@ -336,7 +336,7 @@ fn main() {
             let gain = if sound_generator.mute[ch] || freq <= 30.0 { 0 } else { g as i32 };
             let y = (6 + ch * 2) as i32;
             bg.1.set_palette_n_at(0, y, 5, 3);
-            bg.1.set_palette_at(1 + sound_generator.panpod[ch] as i32, y, 3);
+            bg.1.set_palette_at(1 + sound_generator.panpot[ch] as i32, y, 3);
             bg.1.set_palette_at(4, y, if sound_generator.mute[ch] { 5 } else { 4 });
             bg.1.set_cur_pos( 6, y).put_string(&format!("{:7.2}Hz {:1} {:2} ", freq, w, gain), None);
             bg.1.set_cur_pos(21, y).put_code_n(0x7f as u32, gain).put_code_n(' ', 15 - gain);
