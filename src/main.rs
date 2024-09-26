@@ -159,8 +159,9 @@ fn main() {
     {
         let s = "Test for WSG Play".to_string();
         let x = (VM_RECT_SIZE.0 - s.len() as i32) / 2;
-        bg.1.set_cur_pos(x,  0).put_string(&s,    Some(&CharAttributes::new(3, BgSymmetry::Normal)));
-        bg.1.set_cur_pos(4,  4).put_achar(&AChar::new(0x80 as u32, 4, BgSymmetry::Normal));
+        bg.1.set_cur_pos(x, 0).put_string(&s, Some(&CharAttributes::new(3, BgSymmetry::Normal)));
+        bg.1.set_cur_pos(1, 4).put_achar(&AChar::new('C', 4, BgSymmetry::Normal));
+        bg.1.set_cur_pos(4, 4).put_achar(&AChar::new(0x80 as u32, 4, BgSymmetry::Normal));
         for i in 0..8 {
             let y = 6 + i as i32 * 2;
             let achar = AChar::new('0' as u32 + i, 4, BgSymmetry::Normal);
@@ -258,7 +259,13 @@ fn main() {
                     sound_generator.panpod[(m_pos_bgy - 6) as usize / 2] = PanPod::Left;
                 }
                 if achar.code == 'C' as u32 {
-                    sound_generator.panpod[(m_pos_bgy - 6) as usize / 2] = PanPod::Center;
+                    if m_pos_bgy < 6 {
+                        for panpod in sound_generator.panpod.iter_mut() {
+                            *panpod = PanPod::Center;
+                        }
+                    } else {
+                        sound_generator.panpod[(m_pos_bgy - 6) as usize / 2] = PanPod::Center;
+                    }
                 }
                 if achar.code == 'R' as u32 {
                     sound_generator.panpod[(m_pos_bgy - 6) as usize / 2] = PanPod::Right;

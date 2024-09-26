@@ -93,6 +93,9 @@ impl SoundGenerator {
         for d in self.mixed_buffer.iter_mut() {
             *d = SETUP_U16 as u16;
         }
+        for p in self.panpod.iter_mut() {
+            *p = PanPod::Center;
+        }
     }
 
     pub fn sampling_freq(&self) -> i32 {
