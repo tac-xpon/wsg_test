@@ -3,7 +3,7 @@ use wave_data::*;
 
 const NUM_OF_GENARTORS: usize = 8;
 const GAIN_UP_TRANSITION: f64 = 0.1;
-const GAIN_DOWN_TRANSITION: f64 = 0.1;
+const GAIN_DOWN_TRANSITION: f64 = 0.01;
 
 struct GeneratorUnit {
     buffer: Vec<i32>,
@@ -30,6 +30,13 @@ impl GeneratorUnit {
     }
 }
 
+#[derive(PartialEq, Eq, PartialOrd, Ord, Clone, Copy, Debug)]
+pub enum PanPod {
+    Left = -1,
+    Center = 0,
+    Right = 1,
+}
+
 pub struct SoundGenerator {
     sampling_freq: i32,
     buffer_size: usize,
@@ -40,6 +47,7 @@ pub struct SoundGenerator {
     pub mute: [bool; NUM_OF_GENARTORS],
     buffer_pos: usize,
     mixed_buffer: Vec<u16>,
+    pub panpod: [PanPod; NUM_OF_GENARTORS],
 }
 
 #[allow(dead_code)]
@@ -69,7 +77,8 @@ impl SoundGenerator {
             ],
             mute: [false; NUM_OF_GENARTORS],
             buffer_pos: 0,
-            mixed_buffer: vec![SETUP_U16 as u16; samples_per_frame],
+            mixed_buffer: vec![SETUP_U16 as u16; samples_per_frame * 2],
+            panpod: [PanPod::Center; NUM_OF_GENARTORS],
         }
     }
 
@@ -160,11 +169,22 @@ impl SoundGenerator {
             }
         }
         for i in 0..self.samples_per_frame {
-            let mut integrated = 0;
-            for unit in self.generators.iter() {
-                integrated += unit.buffer[self.buffer_pos];
+            let mut integrated_l = 0;
+            let mut integrated_r = 0;
+            for (unit_no, unit) in self.generators.iter().enumerate() {
+                if self.panpod[unit_no] == PanPod::Left {
+                    integrated_l += unit.buffer[self.buffer_pos];
+                }
+                if self.panpod[unit_no] == PanPod::Center {
+                    integrated_l += unit.buffer[self.buffer_pos] / 2;
+                    integrated_r += unit.buffer[self.buffer_pos] / 2;
+                }
+                if self.panpod[unit_no] == PanPod::Right {
+                    integrated_r += unit.buffer[self.buffer_pos];
+                }
             }
-            self.mixed_buffer[i] = (integrated / NUM_OF_GENARTORS as i32 + SETUP_U16) as u16;
+            self.mixed_buffer[i * 2    ] = (integrated_l / NUM_OF_GENARTORS as i32 + SETUP_U16) as u16;
+            self.mixed_buffer[i * 2 + 1] = (integrated_r / NUM_OF_GENARTORS as i32 + SETUP_U16) as u16;
             self.buffer_pos = (self.buffer_pos + 1) % self.buffer_size;
         }
     }

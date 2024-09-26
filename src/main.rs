@@ -144,8 +144,8 @@ fn main() {
 
     let mut audio_context = AudioContext::with_subsystem(audio_subsystem);
     audio_context.set_freq(Some(SAMPLING_FREQ));
-    audio_context.set_channels(Some(1));
-    audio_context.set_samples(Some(256));
+    audio_context.set_channels(Some(2));
+    audio_context.set_samples(Some(512));
     let mut audio_device_a = audio_context.open_device(SOUND_BUF_SIZE).unwrap();
 
     let mut sound_manager = SoundManager::default();
@@ -160,12 +160,13 @@ fn main() {
         let s = "Test for WSG Play".to_string();
         let x = (VM_RECT_SIZE.0 - s.len() as i32) / 2;
         bg.1.set_cur_pos(x,  0).put_string(&s,    Some(&CharAttributes::new(3, BgSymmetry::Normal)));
-        bg.1.set_cur_pos(3,  4).put_achar(&AChar::new(0x80 as u32, 4, BgSymmetry::Normal));
+        bg.1.set_cur_pos(4,  4).put_achar(&AChar::new(0x80 as u32, 4, BgSymmetry::Normal));
         for i in 0..8 {
             let y = 6 + i as i32 * 2;
             let achar = AChar::new('0' as u32 + i, 4, BgSymmetry::Normal);
-            bg.1.set_cur_pos( 3, y).put_achar(&achar).put_achar(&AChar::new(':', 1, BgSymmetry::Normal));
-            bg.1.set_cur_pos(16, y).put_palette_n(3, 18).put_palette(2);
+            bg.1.set_cur_pos( 0, y).put_string("LCR", Some(&CharAttributes::new(5, BgSymmetry::Normal)));
+            bg.1.set_cur_pos( 4, y).put_achar(&achar).put_achar(&AChar::new(':', 1, BgSymmetry::Normal));
+            bg.1.set_cur_pos(17, y).put_palette_n(3, 18).put_palette(2);
         }
         bg.1.set_cur_pos(8, 3).put_string(&"LastFrame", None);
         bg.1.set_achar_at(12, 4, &AChar::new(0x7fu32, 4, BgSymmetry::Normal));
@@ -191,7 +192,7 @@ fn main() {
     input_role_state.clear_all();
     let mut offset = 0;
     'main_loop: loop {
-        let mut pos = (t_count * SAMPLES_PER_FRAME as i32 + offset) as usize;
+        let mut pos = (2 * t_count * SAMPLES_PER_FRAME as i32 + offset) as usize;
         let audio_device_current = audio_device_a.current();
         while audio_device_current > pos {
             pos += SAMPLES_PER_FRAME;
@@ -252,6 +253,15 @@ fn main() {
                 if achar.code == 0x7f {
                     suppress_last = !suppress_last;
                     sound_manager.suppress_last_silence = suppress_last;
+                }
+                if achar.code == 'L' as u32 {
+                    sound_generator.panpod[(m_pos_bgy - 6) as usize / 2] = PanPod::Left;
+                }
+                if achar.code == 'C' as u32 {
+                    sound_generator.panpod[(m_pos_bgy - 6) as usize / 2] = PanPod::Center;
+                }
+                if achar.code == 'R' as u32 {
+                    sound_generator.panpod[(m_pos_bgy - 6) as usize / 2] = PanPod::Right;
                 }
             }
         }
@@ -318,9 +328,11 @@ fn main() {
             let freq = f as f64 / FREQ_ADJ_RATIO;
             let gain = if sound_generator.mute[ch] || freq <= 30.0 { 0 } else { g as i32 };
             let y = (6 + ch * 2) as i32;
-            bg.1.set_palette_at(3, y, if sound_generator.mute[ch] { 5 } else { 4 });
-            bg.1.set_cur_pos( 5, y).put_string(&format!("{:7.2}Hz {:1} {:2} ", freq, w, gain), None);
-            bg.1.set_cur_pos(20, y).put_code_n(0x7f as u32, gain).put_code_n(' ', 15 - gain);
+            bg.1.set_palette_n_at(0, y, 5, 3);
+            bg.1.set_palette_at(1 + sound_generator.panpod[ch] as i32, y, 3);
+            bg.1.set_palette_at(4, y, if sound_generator.mute[ch] { 5 } else { 4 });
+            bg.1.set_cur_pos( 6, y).put_string(&format!("{:7.2}Hz {:1} {:2} ", freq, w, gain), None);
+            bg.1.set_cur_pos(21, y).put_code_n(0x7f as u32, gain).put_code_n(' ', 15 - gain);
         }
         bg.1.set_cur_pos(4, 22);
         for music_no in 0..0x20 {
